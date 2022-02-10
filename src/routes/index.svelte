@@ -1,9 +1,30 @@
 <script lang="ts">
-	let registered = [];
 	let emanations = [];
 
-	function key_down_handler(e: KeyboardEvent) {
-		switch (e.key) {
+	function pressClick(node: HTMLButtonElement) {
+		let handle;
+		const mouseDown = () => {
+			handle = setTimeout(() => node.dispatchEvent(new CustomEvent('pressClick')), 500);
+		};
+		const mouseUp = () => {
+			clearTimeout(handle);
+		};
+
+		node.addEventListener('touchstart', mouseDown);
+		node.addEventListener('mousedown', mouseDown);
+		node.addEventListener('touchend', mouseUp);
+		node.addEventListener('mouseup', mouseUp);
+
+		return {
+			destroy() {
+				node.removeEventListener('mousedown', mouseDown);
+				node.removeEventListener('mouseup', mouseUp);
+			}
+		};
+	}
+
+	function push_button(key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight' | 'Clean') {
+		switch (key) {
 			case 'ArrowUp':
 				emanations.push('⬆');
 				break;
@@ -16,40 +37,35 @@
 			case 'ArrowRight':
 				emanations.push('➡');
 				break;
-			case 'Enter':
-				if (emanations.length !== 0) {
-					registered.push(emanations.join(''));
-					emanations = [];
-					registered = registered;
-				}
-				break;
-			default:
-				e.preventDefault();
-				return;
 		}
-		emanations = emanations;
+		emanations = emanations.slice(0, 8);
 	}
 
 	function clear() {
-		registered = [];
 		emanations = [];
 	}
 </script>
 
 <h1 class="mx-auto text-center font-bold mb-6 text-4xl">Emanations</h1>
 
-<div class="max-w-xl mx-auto flex flex-col items-center">
-	<label class="text-lg mb-3 text-center" for="emanations"
-		>Emanations (push arrows and press enter)</label
-	>
-	<!-- svelte-ignore a11y-autofocus -->
-	<input autofocus class="block mb-3" name="emanations" type="text" on:keydown={key_down_handler} />
-
-	<ol class="text-4xl text">
-		{#each registered as emanation}
-			<li class="mb-2">{emanation}</li>
-		{/each}
-	</ol>
-
-	<button on:click={clear}>Clear</button>
+<div
+	class="h-[calc(var(--mySize)*3)] w-[calc(var(--mySize)*3)] grid grid-cols-3 grid-rows-3 gap-4 mx-auto mb-4"
+>
+	<div />
+	<button class="bg-orange-100" on:click={() => push_button('ArrowUp')} />
+	<div />
+	<button class="bg-orange-100" on:click={() => push_button('ArrowLeft')} />
+	<button use:pressClick on:pressClick={clear} on:dblclick={clear}> Press to clean </button>
+	<button class="bg-orange-100" on:click={() => push_button('ArrowRight')} />
+	<div />
+	<button class="bg-orange-100" on:click={() => push_button('ArrowDown')} />
+	<div />
 </div>
+
+<div class="text-center"><span class="text-3xl">{emanations.join('')}</span></div>
+
+<style>
+	:root {
+		--mySize: min(30vh, 30vw);
+	}
+</style>
